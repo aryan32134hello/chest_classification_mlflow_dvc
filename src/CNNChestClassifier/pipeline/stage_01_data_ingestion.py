@@ -17,3 +17,14 @@ class DataIngestionTrainingPipeline:
             data_ingestion.extract_zip_file()
         except Exception as e:
             raise e
+        
+
+if __name__=='__main__':
+    try:
+        logger.info(f">>>>>>> stage {STAGE_NAME} started <<<<<<<")
+        obj = DataIngestionTrainingPipeline()
+        obj.main()
+        logger.info(f">>>>>>> stage {STAGE_NAME} completed <<<<<<<<")
+    except Exception as e:
+        logger.exception(e)
+        raise e
