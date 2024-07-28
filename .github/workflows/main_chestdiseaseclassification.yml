@@ -1,0 +1,51 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - chestdiseaseclassification
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Log in to registry
+      uses: docker/login-action@v2
+      with:
+        registry: https://chestclassification.azurecr.io/
+        username: ${{ secrets.AzureAppService_ContainerUsername_be5228a137e14d0b8aa7b05bf4b53876 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_ce2487a690d5475fb2aa60accd95c488 }}
+
+    - name: Build and push container image to registry
+      uses: docker/build-push-action@v3
+      with:
+        push: true
+        tags: chestclassification.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_be5228a137e14d0b8aa7b05bf4b53876 }}/chest-classification:${{ github.sha }}
+        file: ./Dockerfile
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+    - name: Deploy to Azure Web App
+      id: deploy-to-webapp
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'chestdiseaseclassification'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_97d1ce166ff54ec6a403ab508d7211db }}
+        images: 'chestclassification.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_be5228a137e14d0b8aa7b05bf4b53876 }}/chest-classification:${{ github.sha }}'
